@@ -1,0 +1,5 @@
+name = "Jigsaw"
+description = "Allows embedding of various content types, scripts, iframes, syntax-highlighted code"
+package = "Artful Robot"
+core = 7.x
+files[] = jigsaw.module

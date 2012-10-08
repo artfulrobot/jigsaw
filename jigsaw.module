@@ -1,0 +1,123 @@
+<?php
+
+/** 
+  * Implements hookhook_field_formatter_info()
+  */
+function jigsaw_field_formatter_info()
+{
+	return array(
+		'jigsaw_default_formatter' => array(
+			'label' => t('Jigsaw'),
+			'field types' => array('text_long'),
+			),
+			);
+}
+/**
+   * Implements hook_field_formatter_view().
+    */
+function jigsaw_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) 
+{
+	$element = array();
+	switch ($display['type']) {
+		case 'jigsaw_default_formatter' :
+			foreach ($items as $delta=>$item) {
+				$vals =  (isset($item['value']) && $item['value'])
+					? unserialize($item['value'])
+					: array('jigsaw_type'=>'raw','jigsaw_data'=>'');
+
+				$element[$delta]['#markup'] = jigsaw_view_piece($vals);
+			}
+			return $element;
+			break;
+	}
+}
+
+/**
+  * Implements hook_field_widget_info()
+  */
+function jigsaw_field_widget_info()
+{
+	return array( 'jigsaw_default_widget' =>array(
+		'label' => t('Jigsaw widget'),
+		'field types' => array('text_long'),
+		));
+}
+
+
+//function jigsaw_field_widget_form {{{
+/** 
+  * Implements hook_field_widget_form()
+  */
+function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element ) {
+	
+	// $instance[widget][type] == jigsaw_default_widget because there's only one implemented.
+	$element += array(
+			'#type' => 'fieldset',
+			'#element_validate' => array('jigsaw_default_widget_validate'),
+			'#delta' => $delta,
+			);
+
+	// unpack existing data
+	$vals =  (isset($items[$delta]['value']) && $items[$delta]['value'])
+		? unserialize($items[$delta]['value'])
+	   	: array('jigsaw_type'=>'raw','jigsaw_data'=>'');
+
+	$element['jigsaw_type'] = array(
+		'#title' => t('What type is this jigsaw piece?'),
+		'#type' => 'select',
+		'#options' => array(
+			'raw' => 'Embed HTML code copied from another site',
+			'src-php' => 'PHP code to pretty print',
+			),
+		'#default_value' => $vals['jigsaw_type'],
+		);
+	$element['jigsaw_data'] = array(
+		'#title' => t('Enter content'),
+		'#type' => 'textarea',
+		'#default_value' => $vals['jigsaw_data'],
+		);
+	
+	return $element;
+} //}}}
+
+/**
+  * validation hook set in #element_validate
+  */
+function jigsaw_default_widget_validate( $element, &$form_state ){
+
+	// get field definition
+    $field = field_widget_field($element, $form_state);
+
+	// get instance definition 
+   	$instance = field_widget_instance($element, $form_state);
+
+	$field_name = $element['#field_name'];
+	$delta = $element['#delta'];
+	$lang  = $element['#language'];
+	if (isset($form_state['values'][$field_name][$lang][$delta]))
+	{
+		$values = $form_state['values'][$field_name][$lang][$delta];
+
+		/* here could validate $values['jigsaw_type'] and $values['jigsaw_data']
+		   and call form_set_error().
+		   */
+
+		// need to create composite value for field
+		// this is just the PHP serialized version
+		form_set_value($element, array( 'value' => serialize($values)), $form_state);
+	}
+	else form_set_value($element, array( 'value' => NULL), $form_state);
+}
+
+function jigsaw_view_piece($data)
+{
+	// Raw output
+	if ($data['jigsaw_type'] == 'raw')
+		return $data['jigsaw_data'];
+
+	if ($data['jigsaw_type'] == 'src-php')
+	{
+		return highlight_string($data['jigsaw_data'],1);
+	}
+}
+
