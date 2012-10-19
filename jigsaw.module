@@ -23,7 +23,7 @@ function jigsaw_field_formatter_view($entity_type, $entity, $field, $instance, $
 			foreach ($items as $delta=>$item) {
 				$vals =  (isset($item['value']) && $item['value'])
 					? unserialize($item['value'])
-					: array('jigsaw_type'=>'raw','jigsaw_data'=>'');
+					: array();
 
 				$element[$delta]['#markup'] = jigsaw_view_piece($vals);
 			}
@@ -55,21 +55,36 @@ function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $lan
 			'#type' => 'fieldset',
 			'#element_validate' => array('jigsaw_default_widget_validate'),
 			'#delta' => $delta,
+			'#collapsible' => true,
+			'#collapsed' => true,
 			);
+	$element['#title'] = "$field[field_name]:" . ($delta+1);
+	// debug:	global $user; if ($user->uid ==1 && false) { drupal_set_message( "<pre>" .htmlspecialchars(print_r($field,1)) ."</pre>"); }
 
 	// unpack existing data
 	$vals =  (isset($items[$delta]['value']) && $items[$delta]['value'])
 		? unserialize($items[$delta]['value'])
-	   	: array('jigsaw_type'=>'raw','jigsaw_data'=>'');
+	   	: array();
+
+	$vals += array('jigsaw_type'=>'raw','jigsaw_data'=>'','jigsaw_behaviour'=>'raw');
 
 	$element['jigsaw_type'] = array(
-		'#title' => t('What type is this jigsaw piece?'),
+		'#title' => t('Type'),
 		'#type' => 'select',
 		'#options' => array(
 			'raw' => 'Embed HTML code copied from another site',
 			'src-php' => 'PHP code to pretty print',
 			),
 		'#default_value' => $vals['jigsaw_type'],
+		);
+	$element['jigsaw_behaviour'] = array(
+		'#title' => t('Presentation'),
+		'#type' => 'select',
+		'#options' => array(
+			'raw' => 'As-is',
+			'overlay' => 'Overlay',
+			),
+		'#default_value' => $vals['jigsaw_behaviour'],
 		);
 	$element['jigsaw_data'] = array(
 		'#title' => t('Enter content'),
@@ -80,22 +95,24 @@ function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $lan
 	return $element;
 } //}}}
 
+// function jigsaw_default_widget_validate( $element, &$form_state ){{{
 /**
   * validation hook set in #element_validate
   */
-function jigsaw_default_widget_validate( $element, &$form_state ){
+function jigsaw_default_widget_validate( $element, &$form_state ) {
 
 	// get field definition
-    $field = field_widget_field($element, $form_state);
-
+    // $field = field_widget_field($element, $form_state);
 	// get instance definition 
-   	$instance = field_widget_instance($element, $form_state);
+	//$instance = field_widget_instance($element, $form_state);
 
+	// get the field_name of the fieldset
 	$field_name = $element['#field_name'];
+	// which fieldset set is being edited
 	$delta = $element['#delta'];
 	$lang  = $element['#language'];
-	if (isset($form_state['values'][$field_name][$lang][$delta]))
-	{
+
+	if (!empty($form_state['values'][$field_name][$lang][$delta]['jigsaw_data'])) {
 		$values = $form_state['values'][$field_name][$lang][$delta];
 
 		/* here could validate $values['jigsaw_type'] and $values['jigsaw_data']
@@ -107,17 +124,37 @@ function jigsaw_default_widget_validate( $element, &$form_state ){
 		form_set_value($element, array( 'value' => serialize($values)), $form_state);
 	}
 	else form_set_value($element, array( 'value' => NULL), $form_state);
-}
+} //}}}
 
+// function jigsaw_view_piece($data){{{
 function jigsaw_view_piece($data)
 {
+	static $delta;
+	if (!isset($delta)) $delta=0;
+
+	// ensure defaults
+	$data += array( 'jigsaw_type'=>'raw','jigsaw_data'=>'','jigsaw_behaviour'=>'raw');
+
+	$html = '';
+
 	// Raw output
 	if ($data['jigsaw_type'] == 'raw')
-		return $data['jigsaw_data'];
+		$html = $data['jigsaw_data'];
 
 	if ($data['jigsaw_type'] == 'src-php')
 	{
-		return highlight_string($data['jigsaw_data'],1);
+		$html = highlight_string($data['jigsaw_data'],1);
 	}
-}
+
+	// behaviour
+	if ($data['jigsaw_behaviour'] != 'raw') {
+		// give javascript the html
+		$json = json_encode($html);
+
+		$html = "<div class='jigsaw $data[jigsaw_behaviour]' id='jigsawPiece$delta' ><script type='text/javascript'>window.jigsawPiece$delta = $json ;</script></div>";
+		drupal_add_js( drupal_get_path('module','jigsaw') . '/jigsaw.js' );
+		drupal_add_css( drupal_get_path('module','jigsaw') . '/jigsaw.css' );
+	}
+	return $html;
+} //}}}
 

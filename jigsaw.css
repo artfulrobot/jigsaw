@@ -1,0 +1,20 @@
+/* 
+   */
+
+.jigsaw-overlay {
+	position:fixed;
+	top:0;
+	left:0;
+	right:0;
+	bottom:0;
+	background-color:white;
+	background-color:rgba(255,255,255,0.8);
+	padding:80px 24px 24px;
+	z-index:20;
+}
+.jigsaw-overlay>button {
+	position:fixed;
+	top:24px;
+	right:24px;
+}
+
