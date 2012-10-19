@@ -148,10 +148,8 @@ function jigsaw_view_piece($data)
 
 	// behaviour
 	if ($data['jigsaw_behaviour'] != 'raw') {
-		// give javascript the html
-		$json = json_encode($html);
 
-		$html = "<div class='jigsaw $data[jigsaw_behaviour]' id='jigsawPiece$delta' ><script type='text/javascript'>window.jigsawPiece$delta = $json ;</script></div>";
+		$html = "<div class='jigsaw $data[jigsaw_behaviour]' id='jigsawPiece$delta' >$html</div>";
 		drupal_add_js( drupal_get_path('module','jigsaw') . '/jigsaw.js' );
 		drupal_add_css( drupal_get_path('module','jigsaw') . '/jigsaw.css' );
 	}

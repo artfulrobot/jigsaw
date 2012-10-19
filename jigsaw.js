@@ -22,30 +22,36 @@ var jigsaw = {
 	},/*}}}*/
 	init: function() {/*{{{*/
 		jQuery('.jigsaw.overlay').each( function() {
+
+			// move it off-screen and out of flow
 			var contentId = this.id;
-			jQuery(this)
-				.empty()
-				.append( jQuery('<button>Show</button>').click(jigsaw.overlayShow)) 
-				.append( 
-					jQuery('<div class="jigsaw-overlay"></div>')
-						.hide()
-						.append( jQuery('<button>Close</button>').click(jigsaw.overlayHide) )
-						.append( '<div id="' + contentId + '-content" ></div>' ));
+			jigsaw.overlayContentHide(contentId);
+
+			jQuery(this).before( 
+				jQuery('<div id="' +contentId+ '-extra" ></div>')
+					.append( jQuery('<button>Show</button>').click(
+							function() { jigsaw.overlayShow(contentId);} ))
+					.append( 
+						jQuery('<div class="jigsaw-overlay"></div>')
+							.hide()
+							.append( jQuery('<button>Close</button>').click(
+									function() { jigsaw.overlayHide(contentId);}) )));
 		});
 	},/*}}}*/
-	overlayShow:function() {
-		var o = jQuery(this);
-		// get the content
-		var contentId = o.parent()[0].id;
-		o.hide().siblings('.jigsaw-overlay').fadeIn( function(){ jigsaw.overlayContentLoad(contentId);} );
+	overlayShow:function(contentId) {
+		jQuery('#'+contentId+'-extra').children('button').hide()
+			.siblings('.jigsaw-overlay').fadeIn( function(){ jigsaw.overlayContentLoad(contentId);} );
 	},
-	overlayHide:function() {
-		jQuery(this).closest('.jigsaw-overlay').fadeOut()
+	overlayHide:function(contentId) {
+		jigsaw.overlayContentHide(contentId);
+		jQuery('#'+contentId+'-extra').children('.jigsaw-overlay').fadeOut()
 			.siblings('button').show();
 	},
+	overlayContentHide:function(contentId) {
+		jQuery('#'+contentId).css( { position:'absolute', left:"-10000px" } );
+	},
 	overlayContentLoad:function(contentId) {
-		console.log("contentId:", contentId, jQuery('#'+contentId+'-content'), window[contentId]);
-		jQuery('#'+contentId+'-content').html( window[ contentId ]);
+		jQuery('#'+contentId).css( { position:'fixed', left:'24px',top:'46px',zIndex:21} );
 	}
 
 };
