@@ -18,3 +18,12 @@
 	right:24px;
 }
 
+.jigsaw-html,
+.jigsaw-php {
+    overflow:auto;
+}
+
+.jigsaw-html-tag {
+    color:#070;
+}
+

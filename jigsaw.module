@@ -74,6 +74,7 @@ function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $lan
 		'#options' => array(
 			'raw' => 'Embed HTML code copied from another site',
 			'src-php' => 'PHP code to pretty print',
+			'src-html' => 'HTML code to pretty print',
 			),
 		'#default_value' => $vals['jigsaw_type'],
 		);
@@ -132,27 +133,54 @@ function jigsaw_view_piece($data)
 	static $delta;
 	if (!isset($delta)) $delta=0;
 
+    $need_css = false;
 	// ensure defaults
 	$data += array( 'jigsaw_type'=>'raw','jigsaw_data'=>'','jigsaw_behaviour'=>'raw');
 
 	$html = '';
 
+    // santise jigsaw_data's EOLs and remove trailing whitespace
+    // nb. because php's highlight_string requires \r\n EOLs we use those
+    $data['jigsaw_data'] = preg_replace('/[ \t]*(\r\n|\r|\n)/',"\r\n", $data['jigsaw_data']);
+
 	// Raw output
-	if ($data['jigsaw_type'] == 'raw')
+	if ($data['jigsaw_type'] == 'raw') {
 		$html = $data['jigsaw_data'];
 
-	if ($data['jigsaw_type'] == 'src-php')
-	{
-		$html = highlight_string($data['jigsaw_data'],1);
+    } elseif ($data['jigsaw_type'] == 'src-php') {
+		$html = "<div class='jigsaw-php'>" .
+            str_replace('<br />','',
+                highlight_string( $data['jigsaw_data'] ,1))
+            . "</div>";
+        $need_css = true;
+
+	} elseif ($data['jigsaw_type'] == 'src-html') {
+        // this is a very simple html tag highlighter.
+        $need_css = true;
+		$html = "<div class='jigsaw-html'><code>" .
+            strtr(htmlspecialchars(preg_replace(
+                    '/(<.+?>)/s',
+                    '{:{start}:}$1{:{end}:}',
+                    $data['jigsaw_data']
+                )),
+                array(
+                    '{:{start}:}' => '<span class="jigsaw-html-tag">',
+                    '{:{end}:}' => '</span>',
+            ))
+            . "</code></div>";
+        $need_css = true;
 	}
 
 	// behaviour
 	if ($data['jigsaw_behaviour'] != 'raw') {
+        $need_css = true;
 
 		$html = "<div class='jigsaw $data[jigsaw_behaviour]' id='jigsawPiece$delta' >$html</div>";
 		drupal_add_js( drupal_get_path('module','jigsaw') . '/jigsaw.js' );
-		drupal_add_css( drupal_get_path('module','jigsaw') . '/jigsaw.css' );
 	}
+    if ($need_css) {
+		drupal_add_css( drupal_get_path('module','jigsaw') . '/jigsaw.css' );
+    }
 	return $html;
 } //}}}
 
