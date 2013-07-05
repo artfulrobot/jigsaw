@@ -21,11 +21,17 @@ function jigsaw_field_formatter_view($entity_type, $entity, $field, $instance, $
 	switch ($display['type']) {
 		case 'jigsaw_default_formatter' :
 			foreach ($items as $delta=>$item) {
-				$vals =  (isset($item['value']) && $item['value'])
-					? unserialize($item['value'])
-					: array();
-
-				$element[$delta]['#markup'] = jigsaw_view_piece($vals);
+				if (isset($item['value']) && $item['value']) {
+                    $vals = @unserialize($item['value']);
+                    if ($vals===false) {
+                        // unserialize failed, e.g. field was originally edited without jigsaw
+                        $element[$delta]['#markup'] = htmlspecialchars($item['value']);
+                    } else {
+                        $element[$delta]['#markup'] = jigsaw_view_piece($vals);
+                    }
+                } else {
+                    $element[$delta]['#markup'] = '';
+                }
 			}
 			return $element;
 			break;
@@ -62,9 +68,15 @@ function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $lan
 	// debug:	global $user; if ($user->uid ==1 && false) { drupal_set_message( "<pre>" .htmlspecialchars(print_r($field,1)) ."</pre>"); }
 
 	// unpack existing data
-	$vals =  (isset($items[$delta]['value']) && $items[$delta]['value'])
-		? unserialize($items[$delta]['value'])
-	   	: array();
+	$vals = array();
+    if (isset($items[$delta]['value']) && $items[$delta]['value']) {
+        $_ = @unserialize($items[$delta]['value']);
+        if (is_array($_)) {
+            $vals = $_;
+        } else {
+            $vals['jigsaw_data'] = $items[$delta]['value'];
+        }
+    }
 
 	$vals += array('jigsaw_type'=>'raw','jigsaw_data'=>'','jigsaw_behaviour'=>'raw');
 
@@ -73,6 +85,7 @@ function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $lan
 		'#type' => 'select',
 		'#options' => array(
 			'raw' => 'Embed HTML code copied from another site',
+			'src-code' => 'Generic code',
 			'src-php' => 'PHP code to pretty print',
 			'src-html' => 'HTML code to pretty print',
 			),
@@ -148,16 +161,23 @@ function jigsaw_view_piece($data)
 		$html = $data['jigsaw_data'];
 
     } elseif ($data['jigsaw_type'] == 'src-php') {
-		$html = "<div class='jigsaw-php'>" .
+		$html = "<div class='jigsaw-code jigsaw-php'>" .
             str_replace('<br />','',
                 highlight_string( $data['jigsaw_data'] ,1))
             . "</div>";
         $need_css = true;
 
+	} elseif ($data['jigsaw_type'] == 'src-code') {
+        // general code; no special formatting
+        $need_css = true;
+		$html = "<div class='jigsaw-code'><code>"
+                .  htmlspecialchars($data['jigsaw_data'])
+                . "</code></div>";
+
 	} elseif ($data['jigsaw_type'] == 'src-html') {
         // this is a very simple html tag highlighter.
         $need_css = true;
-		$html = "<div class='jigsaw-html'><code>" .
+		$html = "<div class='jigsaw-code jigsaw-html'><code>" .
             strtr(htmlspecialchars(preg_replace(
                     '/(<.+?>)/s',
                     '{:{start}:}$1{:{end}:}',
