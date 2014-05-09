@@ -3,57 +3,87 @@
   *
   *
   * If a behaviour is specified on a Jigsaw field, the output is wrapped in a div with the behaviour as a class.  *
+  *
+  *
+  * we definitely receive this:
+  *
+  * div.jigsaw.overlay
+  *   (content)
+  *
+  * or we can receive this
+  *
+  * div.jigsaw.overlay
+  *   .overlay-placeholder
+  *      (placeholder content)
+  *      .show-overlay - optional element
+  *   .overlay-full
+  *      (full content)
+  *
   */
 
 var jigsaw = {
-	xinit: function() {/*{{{*/
-		jQuery('.jigsaw.overlay').each( function() {
-
-			// remove the contents; it's now stored in window.jigsawPiece<N>
-			var content = jQuery(this).empty().html('<div class="jigsaw-overlay-wrapper"><button>Show</button>'
-				+'<div class="jigsaw-overlay"><button>Close</button><div class="jigsaw-content"></div></div></div>');
-			// create container
-			content.before(container);
-			// move content
-			container.find(".jigsaw-overlay").hide().append(content);
-			container.children("button").click(jigsaw.overlayShow);
-			container.children(".jigsaw-overlay").children('button').click(jigsaw.overlayHide);
-		});
-	},/*}}}*/
 	init: function() {/*{{{*/
 		jQuery('.jigsaw.overlay').each( function() {
+            var container = jQuery(this);
 
-			// move it off-screen and out of flow
-			var contentId = this.id;
-			jigsaw.overlayContentHide(contentId);
+            // does this contain .overlay-placeholder and .overlay-full objects?
+            if (container.children('.overlay-placeholder, .overlay-full').length != 2) {
+                // No. Assume that the content of this container is the .overlay-full
+                container.children().wrapAll('<div class="overlay-full">');
+                container.prepend('<div class="overlay-placeholder" />');
+            }
 
-			jQuery(this).before( 
-				jQuery('<div id="' +contentId+ '-extra" ></div>')
-					.append( jQuery('<button>Show</button>').click(
-							function() { jigsaw.overlayShow(contentId);} ))
-					.append( 
-						jQuery('<div class="jigsaw-overlay"></div>')
-							.hide()
-							.append( jQuery('<button>Close</button>').click(
-									function() { jigsaw.overlayHide(contentId);}) )));
+            // does the .overlay-placeholder contain a .overlay-show element
+            if (container.children('.overlay-placeholder').find('.overlay-show').length == 0 ) {
+                container.children('.overlay-placeholder').append('<button class="overlay-show" >Show</button>');
+            }
+            // Make the show element clickable.
+            container.find('.overlay-placeholder .overlay-show').click(jigsaw.overlayShow);
+
+            // Create a close button
+            container.children('.overlay-full').prepend(
+                jQuery('<button class="overlay-hide" >Close</button>')
+                    .click(jigsaw.overlayHide)
+                    .css({ position:'absolute', top:"2rem", right:"2rem" })
+                    );
+
+            // Hide the full version
+            container.children('.overlay-full').css( jigsaw.offscreenCSS );
 		});
 	},/*}}}*/
-	overlayShow:function(contentId) {
-		jQuery('#'+contentId+'-extra').children('button').hide()
-			.siblings('.jigsaw-overlay').fadeIn( function(){ jigsaw.overlayContentLoad(contentId);} );
+	getContainer:function(el) {
+        el = jQuery(el);
+        if (el.hasClass('jigsaw overlay')) {
+            return el;
+        } else {
+            return el.closest('.jigsaw.overlay');
+        }
+    },
+	overlayHide:function(e) {
+        // move full content off-screen and out of flow
+        jigsaw.getContainer(e.target)
+            .children('.overlay-full')
+                .animate( { opacity:0 }, function() {
+                    jQuery(this).css( jigsaw.offscreenCSS )
+                    })
+            .end()
+            .children('.overlay-placeholder').show();
 	},
-	overlayHide:function(contentId) {
-		jigsaw.overlayContentHide(contentId);
-		jQuery('#'+contentId+'-extra').children('.jigsaw-overlay').fadeOut()
-			.siblings('button').show();
+	overlayShow:function(e) {
+        // full content on-screen
+        jigsaw.getContainer(e.target)
+            .children('.overlay-full')
+                .css( { position:'fixed',
+                        left:"0", width:"", right:0, top:0,
+                        height:"", bottom:0,
+                        "background-color":"white",
+                        "z-index":100,
+                        padding:"2rem" } )
+                .animate( { opacity: 1} )
+            .end()
+            .children('.overlay-placeholder').hide();
 	},
-	overlayContentHide:function(contentId) {
-		jQuery('#'+contentId).css( { position:'absolute', left:"-10000px" } );
-	},
-	overlayContentLoad:function(contentId) {
-		jQuery('#'+contentId).css( { position:'fixed', left:'24px',top:'46px',zIndex:21} );
-	}
-
+    offscreenCSS:  { position:'absolute', left:"-10000px", width:"1px", height:"1px", overflow:"hidden", opacity:0}
 };
 
 jQuery(jigsaw.init);
