@@ -5,23 +5,23 @@
   */
 function jigsaw_field_formatter_info()
 {
-	return array(
-		'jigsaw_default_formatter' => array(
-			'label' => t('Jigsaw'),
-			'field types' => array('text_long'),
-			),
-			);
+    return array(
+        'jigsaw_default_formatter' => array(
+            'label' => t('Jigsaw'),
+            'field types' => array('text_long'),
+            ),
+            );
 }
 /**
    * Implements hook_field_formatter_view().
     */
 function jigsaw_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) 
 {
-	$element = array();
-	switch ($display['type']) {
-		case 'jigsaw_default_formatter' :
-			foreach ($items as $delta=>$item) {
-				if (isset($item['value']) && $item['value']) {
+    $element = array();
+    switch ($display['type']) {
+        case 'jigsaw_default_formatter' :
+            foreach ($items as $delta=>$item) {
+                if (isset($item['value']) && $item['value']) {
                     $vals = @unserialize($item['value']);
                     if ($vals===false) {
                         // unserialize failed, e.g. field was originally edited without jigsaw
@@ -32,10 +32,10 @@ function jigsaw_field_formatter_view($entity_type, $entity, $field, $instance, $
                 } else {
                     $element[$delta]['#markup'] = '';
                 }
-			}
-			return $element;
-			break;
-	}
+            }
+            return $element;
+            break;
+    }
 }
 
 /**
@@ -43,10 +43,10 @@ function jigsaw_field_formatter_view($entity_type, $entity, $field, $instance, $
   */
 function jigsaw_field_widget_info()
 {
-	return array( 'jigsaw_default_widget' =>array(
-		'label' => t('Jigsaw widget'),
-		'field types' => array('text_long'),
-		));
+    return array( 'jigsaw_default_widget' =>array(
+        'label' => t('Jigsaw widget'),
+        'field types' => array('text_long'),
+        ));
 }
 
 
@@ -55,20 +55,20 @@ function jigsaw_field_widget_info()
   * Implements hook_field_widget_form()
   */
 function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element ) {
-	
-	// $instance[widget][type] == jigsaw_default_widget because there's only one implemented.
-	$element += array(
-			'#type' => 'fieldset',
-			'#element_validate' => array('jigsaw_default_widget_validate'),
-			'#delta' => $delta,
-			'#collapsible' => true,
-			'#collapsed' => true,
-			);
-	$element['#title'] = "$field[field_name]:" . ($delta+1);
-	// debug:	global $user; if ($user->uid ==1 && false) { drupal_set_message( "<pre>" .htmlspecialchars(print_r($field,1)) ."</pre>"); }
+    
+    // $instance[widget][type] == jigsaw_default_widget because there's only one implemented.
+    $element += array(
+            '#type' => 'fieldset',
+            '#element_validate' => array('jigsaw_default_widget_validate'),
+            '#delta' => $delta,
+            '#collapsible' => true,
+            '#collapsed' => true,
+            );
+    $element['#title'] = "$field[field_name]:" . ($delta+1);
+    // debug:    global $user; if ($user->uid ==1 && false) { drupal_set_message( "<pre>" .htmlspecialchars(print_r($field,1)) ."</pre>"); }
 
-	// unpack existing data
-	$vals = array();
+    // unpack existing data
+    $vals = array();
     if (isset($items[$delta]['value']) && $items[$delta]['value']) {
         $_ = @unserialize($items[$delta]['value']);
         if (is_array($_)) {
@@ -78,35 +78,35 @@ function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $lan
         }
     }
 
-	$vals += array('jigsaw_type'=>'raw','jigsaw_data'=>'','jigsaw_behaviour'=>'raw');
+    $vals += array('jigsaw_type'=>'raw','jigsaw_data'=>'','jigsaw_behaviour'=>'raw');
 
-	$element['jigsaw_type'] = array(
-		'#title' => t('Type'),
-		'#type' => 'select',
-		'#options' => array(
-			'raw' => 'Embed HTML code copied from another site',
-			'src-code' => 'Generic code',
-			'src-php' => 'PHP code to pretty print',
-			'src-html' => 'HTML code to pretty print',
-			),
-		'#default_value' => $vals['jigsaw_type'],
-		);
-	$element['jigsaw_behaviour'] = array(
-		'#title' => t('Presentation'),
-		'#type' => 'select',
-		'#options' => array(
-			'raw' => 'As-is',
-			'overlay' => 'Overlay',
-			),
-		'#default_value' => $vals['jigsaw_behaviour'],
-		);
-	$element['jigsaw_data'] = array(
-		'#title' => t('Enter content'),
-		'#type' => 'textarea',
-		'#default_value' => $vals['jigsaw_data'],
-		);
-	
-	return $element;
+    $element['jigsaw_type'] = array(
+        '#title' => t('Type'),
+        '#type' => 'select',
+        '#options' => array(
+            'raw' => 'Embed HTML code copied from another site',
+            'src-code' => 'Generic code',
+            'src-php' => 'PHP code to pretty print',
+            'src-html' => 'HTML code to pretty print',
+            ),
+        '#default_value' => $vals['jigsaw_type'],
+        );
+    $element['jigsaw_behaviour'] = array(
+        '#title' => t('Presentation'),
+        '#type' => 'select',
+        '#options' => array(
+            'raw' => 'As-is',
+            'overlay' => 'Overlay',
+            ),
+        '#default_value' => $vals['jigsaw_behaviour'],
+        );
+    $element['jigsaw_data'] = array(
+        '#title' => t('Enter content'),
+        '#type' => 'textarea',
+        '#default_value' => $vals['jigsaw_data'],
+        );
+    
+    return $element;
 } //}}}
 
 // function jigsaw_default_widget_validate( $element, &$form_state ){{{
@@ -115,69 +115,76 @@ function jigsaw_field_widget_form( &$form, &$form_state, $field, $instance, $lan
   */
 function jigsaw_default_widget_validate( $element, &$form_state ) {
 
-	// get field definition
+    // get field definition
     // $field = field_widget_field($element, $form_state);
-	// get instance definition 
-	//$instance = field_widget_instance($element, $form_state);
+    // get instance definition 
+    //$instance = field_widget_instance($element, $form_state);
 
-	// get the field_name of the fieldset
-	$field_name = $element['#field_name'];
-	// which fieldset set is being edited
-	$delta = $element['#delta'];
-	$lang  = $element['#language'];
+    // get the field_name of the fieldset
+    $field_name = $element['#field_name'];
+    // which fieldset set is being edited
+    $delta = $element['#delta'];
+    $lang  = $element['#language'];
 
-	if (!empty($form_state['values'][$field_name][$lang][$delta]['jigsaw_data'])) {
-		$values = $form_state['values'][$field_name][$lang][$delta];
+    if (!empty($form_state['values'][$field_name][$lang][$delta]['jigsaw_data'])) {
+        $values = $form_state['values'][$field_name][$lang][$delta];
 
-		/* here could validate $values['jigsaw_type'] and $values['jigsaw_data']
-		   and call form_set_error().
-		   */
+        /* here could validate $values['jigsaw_type'] and $values['jigsaw_data']
+           and call form_set_error().
+           */
 
-		// need to create composite value for field
-		// this is just the PHP serialized version
-		form_set_value($element, array( 'value' => serialize($values)), $form_state);
-	}
-	else form_set_value($element, array( 'value' => NULL), $form_state);
+        // need to create composite value for field
+        // this is just the PHP serialized version
+        form_set_value($element, array( 'value' => serialize($values)), $form_state);
+    }
+    else form_set_value($element, array( 'value' => NULL), $form_state);
 } //}}}
 
 // function jigsaw_view_piece($data){{{
 function jigsaw_view_piece($data)
 {
-	static $delta;
-	if (!isset($delta)) $delta=0;
+    static $delta;
+    if (!isset($delta)) $delta=0;
 
     $need_css = false;
-	// ensure defaults
-	$data += array( 'jigsaw_type'=>'raw','jigsaw_data'=>'','jigsaw_behaviour'=>'raw');
+    // ensure defaults
+    $data += array( 'jigsaw_type'=>'raw','jigsaw_data'=>'','jigsaw_behaviour'=>'raw');
 
-	$html = '';
+    $html = '';
 
     // santise jigsaw_data's EOLs and remove trailing whitespace
     // nb. because php's highlight_string requires \r\n EOLs we use those
     $data['jigsaw_data'] = preg_replace('/[ \t]*(\r\n|\r|\n)/',"\r\n", $data['jigsaw_data']);
 
-	// Raw output
-	if ($data['jigsaw_type'] == 'raw') {
-		$html = $data['jigsaw_data'];
+    // Raw output
+    if ($data['jigsaw_type'] == 'raw') {
+        $html = $data['jigsaw_data'];
 
     } elseif ($data['jigsaw_type'] == 'src-php') {
-		$html = "<div class='jigsaw-code jigsaw-php'>" .
-            str_replace('<br />','',
-                highlight_string( $data['jigsaw_data'] ,1))
-            . "</div>";
+      if (strpos($data['jigsaw_data'], '<?php')===FALSE) {
+        // no <?php tags, which are needed for highlight_string to work...
+        $prepend = "<?php\n";
+      }
+        $_ = str_replace('<br />','',
+                highlight_string( $prepend . $data['jigsaw_data'] ,1));
+        if ($prepend) {
+          // Now strip the prepend out.
+          $_ = preg_replace('/^(<code><span.+?>)\s*<(.+?>){2}/','$1',$_);
+        }
+        $html = "<div class='jigsaw-code jigsaw-php'>$_</div>" ;
         $need_css = true;
 
-	} elseif ($data['jigsaw_type'] == 'src-code') {
+    } elseif ($data['jigsaw_type'] == 'src-code') {
         // general code; no special formatting
         $need_css = true;
-		$html = "<div class='jigsaw-code'><code>"
+        $html = "<div class='jigsaw-code'><code>"
                 .  htmlspecialchars($data['jigsaw_data'])
                 . "</code></div>";
 
-	} elseif ($data['jigsaw_type'] == 'src-html') {
+    } elseif ($data['jigsaw_type'] == 'src-html') {
         // this is a very simple html tag highlighter.
         $need_css = true;
-		$html = "<div class='jigsaw-code jigsaw-html'><code>" .
+        $html = "<div class='jigsaw-code jigsaw-html'><code>" .
             strtr(htmlspecialchars(preg_replace(
                     '/(<.+?>)/s',
                     '{:{start}:}$1{:{end}:}',
@@ -189,18 +196,18 @@ function jigsaw_view_piece($data)
             ))
             . "</code></div>";
         $need_css = true;
-	}
+    }
 
-	// behaviour
-	if ($data['jigsaw_behaviour'] != 'raw') {
+    // behaviour
+    if ($data['jigsaw_behaviour'] != 'raw') {
         $need_css = true;
 
-		$html = "<div class='jigsaw $data[jigsaw_behaviour]' id='jigsawPiece$delta' >$html</div>";
-		drupal_add_js( drupal_get_path('module','jigsaw') . '/jigsaw.js' );
-	}
-    if ($need_css) {
-		drupal_add_css( drupal_get_path('module','jigsaw') . '/jigsaw.css' );
+        $html = "<div class='jigsaw $data[jigsaw_behaviour]' id='jigsawPiece$delta' >$html</div>";
+        drupal_add_js( drupal_get_path('module','jigsaw') . '/jigsaw.js' );
     }
-	return $html;
+    if ($need_css) {
+        drupal_add_css( drupal_get_path('module','jigsaw') . '/jigsaw.css' );
+    }
+    return $html;
 } //}}}
 
