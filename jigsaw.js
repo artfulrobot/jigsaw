@@ -19,6 +19,9 @@
   *   .overlay-full
   *      (full content)
   *
+  * @todo I'd like it to offer a zoom function where the placeholder, show and
+  * full are all the same element.
+  *
   */
 
 var jigsaw = {
@@ -27,28 +30,31 @@ var jigsaw = {
             var container = jQuery(this);
 
             // does this contain .overlay-placeholder and .overlay-full objects?
-            if (container.children('.overlay-placeholder, .overlay-full').length != 2) {
+            var placeholder = container.children('.overlay-placeholder');
+            var full = container.children('.overlay-full');
+            if (full.length == 0) {
                 // No. Assume that the content of this container is the .overlay-full
-                container.children().wrapAll('<div class="overlay-full">');
+                full = container.children().wrapAll('<div class="overlay-full">');
+                // Nb. it is invalid to provide placeholder by not full.
                 container.prepend('<div class="overlay-placeholder" />');
             }
 
             // does the .overlay-placeholder contain a .overlay-show element
-            if (container.children('.overlay-placeholder').find('.overlay-show').length == 0 ) {
-                container.children('.overlay-placeholder').append('<button class="overlay-show" >Show</button>');
+            if (placeholder.find('.overlay-show').length == 0 ) {
+                placeholder.append('<button class="overlay-show" >Show</button>');
             }
             // Make the show element clickable.
-            container.find('.overlay-placeholder .overlay-show').click(jigsaw.overlayShow);
+            placeholder.find('.overlay-show').click(jigsaw.overlayShow);
 
             // Create a close button
-            container.children('.overlay-full').prepend(
+            full.prepend(
                 jQuery('<button class="overlay-hide" >Close</button>')
                     .click(jigsaw.overlayHide)
                     .css({ position:'absolute', top:"2rem", right:"2rem" })
                     );
 
             // Hide the full version
-            container.children('.overlay-full').css( jigsaw.offscreenCSS );
+            full.css( jigsaw.offscreenCSS );
 		});
 	},/*}}}*/
 	getContainer:function(el) {
@@ -66,8 +72,7 @@ var jigsaw = {
                 .animate( { opacity:0 }, function() {
                     jQuery(this).css( jigsaw.offscreenCSS )
                     })
-            .end()
-            .children('.overlay-placeholder').show();
+            .end();
 	},
 	overlayShow:function(e) {
         // full content on-screen
@@ -80,8 +85,7 @@ var jigsaw = {
                         "z-index":100,
                         padding:"2rem" } )
                 .animate( { opacity: 1} )
-            .end()
-            .children('.overlay-placeholder').hide();
+            .end();
 	},
     offscreenCSS:  { position:'absolute', left:"-10000px", width:"1px", height:"1px", overflow:"hidden", opacity:0}
 };

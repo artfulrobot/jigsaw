@@ -143,8 +143,12 @@ function jigsaw_default_widget_validate( $element, &$form_state ) {
 // function jigsaw_view_piece($data){{{
 function jigsaw_view_piece($data)
 {
-    static $delta;
-    if (!isset($delta)) $delta=0;
+	static $delta;
+	if (!isset($delta)) {
+        $delta=0;
+    } else {
+        $delta++;
+    }
 
     $need_css = false;
     // ensure defaults
