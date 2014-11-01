@@ -164,7 +164,9 @@ function jigsaw_view_piece($data)
     if ($data['jigsaw_type'] == 'raw') {
         $html = $data['jigsaw_data'];
 
-    } elseif ($data['jigsaw_type'] == 'src-php') {
+    }
+    elseif ($data['jigsaw_type'] == 'src-php') {
+      $prepend = '';
       if (strpos($data['jigsaw_data'], '<?php')===FALSE) {
         // no <?php tags, which are needed for highlight_string to work...
         $prepend = "<?php\n";
